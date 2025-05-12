@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Управление витринами</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 1rem; }
+    .hidden { display: none; }
+    .vitrine-card { display: inline-block; width: 150px; margin: 0.5rem; text-align: center; cursor: pointer; }
+    .vitrine-card img { width: 100%; height: auto; border: 1px solid #ccc; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; }
+    button { margin: 0.5rem 0; padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <div id="main-page">
+    <h1>Витрины</h1>
+    <div id="vitrine-list"></div>
+    <button id="reset-all">Сбросить всё</button>
+    <button id="collect-all">Собрать</button>
+  </div>
+  
+  <div id="vitrine-page" class="hidden">
+    <button id="back">← Назад</button>
+    <h1 id="vitrine-title"></h1>
+    <img id="vitrine-photo" alt="" style="max-width:200px;">
+    <table id="input-table">
+      <thead>
+        <tr><th>Полка</th><th>Напиток</th><th>Холод</th><th>Упак.</th><th>Фото</th><th>Нужно</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button id="save-vitrine">Сохранить</button>
+  </div>
+
+  <div id="collect-page" class="hidden">
+    <button id="back-to-main">← Назад</button>
+    <h1>Список для сбора</h1>
+    <table id="collect-table">
+      <thead>
+        <tr><th>Витрина</th><th>Полка</th><th>Напиток</th><th>Упак.</th><th>Фото</th><th>Qty</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+// --- Предопределённые витрины и продукты ---
+const vitrines = [
+  { id: 'v1', name: 'Витрина 1', photo: 'images/v1.jpg', products: [
+      { id:1, name:'Cesu Pilsener', shelf:1, inFridge:false, packagingType:3, img:'images/cesu_pilsener.jpg' },
+      { id:2, name:'Cesu Pilsener Extra', shelf:1, inFridge:true, packagingType:3, img:'images/cesu_pilsener_extra.jpg' },
+      // ...
+    ]
+  },
+  { id: 'v2', name: 'Витрина 2', photo: 'images/v2.jpg', products: [
+      { id:101, name:'Сок', shelf:2, inFridge:false, packagingType:1, img:'images/cesu_pilsener.jpg' },
+      // ...
+    ]
+  }
+];
+const packNames = ['Multi','Glass','Plastic','Can'];
+
+// Хранилище: localStorage под ключом shelf_<vitrineId>
+function loadV(id) {
+  return JSON.parse(localStorage.getItem('shelf_' + id) || '[]');
+}
+function saveV(id, data) {
+  localStorage.setItem('shelf_' + id, JSON.stringify(data));
+}
+function clearAll() {
+  vitrines.forEach(v=>localStorage.removeItem('shelf_' + v.id));
+}
+
+// --- Главная страница ---
+const mainPage = document.getElementById('main-page');
+const vitList = document.getElementById('vitrine-list');
+vitrines.forEach(v=>{
+  const card = document.createElement('div'); card.className='vitrine-card';
+  card.innerHTML = `<img src="${v.photo}"><div>${v.name}</div>`;
+  card.onclick = ()=>openVitrine(v.id);
+  vitList.append(card);
+});
+document.getElementById('reset-all').onclick = ()=>{
+  if(!confirm('Сбросить все данные по всем витринам?')) return;
+  if(!confirm('Точно сбросить? Это удалит все введённые количества.')) return;
+  clearAll(); location.reload();
+};
+document.getElementById('collect-all').onclick = ()=>openCollect();
+
+// --- Страница витрины ---
+const vitPage = document.getElementById('vitrine-page');
+function openVitrine(id) {
+  const v = vitrines.find(x=>x.id===id);
+  mainPage.classList.add('hidden'); vitPage.classList.remove('hidden');
+  document.getElementById('vitrine-title').textContent = v.name;
+  document.getElementById('vitrine-photo').src = v.photo;
+  renderInput(id);
+  document.getElementById('save-vitrine').onclick = ()=>{
+    const data = [];
+    document.querySelectorAll('#input-table tbody tr').forEach(tr=>{
+      const pid = tr.dataset.pid;
+      const qty = +tr.querySelector('input[type=number]').value;
+      data.push({id:+pid,qty});
+    });
+    saveV(id,data);
+    alert('Сохранено');
+  };
+}
+document.getElementById('back').onclick = ()=>{ vitPage.classList.add('hidden'); mainPage.classList.remove('hidden'); };
+function renderInput(id) {
+  const v = vitrines.find(x=>x.id===id);
+  const tbody = document.querySelector('#input-table tbody'); tbody.innerHTML='';
+  const saved = loadV(id);
+  v.products.forEach(p=>{
+    const rec = saved.find(e=>e.id===p.id) || {qty:0};
+    const tr = document.createElement('tr'); tr.dataset.pid = p.id;
+    tr.innerHTML = `
+      <td>${p.shelf}</td>
+      <td>${p.name}</td>
+      <td>${p.inFridge?'Да':'Нет'}</td>
+      <td>${packNames[p.packagingType]}</td>
+      <td><img src="${p.img}" style="max-width:50px"></td>
+      <td><input type="number" min="0" value="${rec.qty}"></td>
+    `;
+    tbody.append(tr);
+  });
+}
+
+// --- Страница сбора ---
+const collectPage = document.getElementById('collect-page');
+function openCollect() {
+  mainPage.classList.add('hidden'); collectPage.classList.remove('hidden');
+  const all = [];
+  vitrines.forEach(v=>{
+    const saved = loadV(v.id).filter(r=>r.qty>0);
+    saved.forEach(r=>{
+      const p = v.products.find(x=>x.id===r.id);
+      all.push({...p, qty:r.qty, vitrine:v.name});
+    });
+  });
+  // сортировка
+  all.sort((a,b)=>{
+    if(a.inFridge!==b.inFridge) return a.inFridge?1:-1;
+    if(a.packagingType!==b.packagingType) return a.packagingType - b.packagingType;
+    return a.shelf - b.shelf;
+  });
+  const tbody = document.querySelector('#collect-table tbody'); tbody.innerHTML='';
+  all.forEach(p=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${p.vitrine}</td>
+      <td>${p.shelf}</td>
+      <td>${p.name}</td>
+      <td>${packNames[p.packagingType]}</td>
+      <td><img src="${p.img}" style="max-width:50px"></td>
+      <td>${p.qty}</td>
+    `;
+    tbody.append(tr);
+  });
+}
+document.getElementById('back-to-main').onclick = ()=>{ collectPage.classList.add('hidden'); mainPage.classList.remove('hidden'); };
+</script>
+</body>
+</html>
