@@ -5,14 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Display Management</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 1rem; box-sizing: border-box; }
+    body { 
+      font-family: sans-serif; 
+      margin: 0; 
+      padding: 1rem; 
+      box-sizing: border-box;
+      width: 100%;
+      overflow-x: hidden;
+    }
     .hidden { display: none; }
-    .vitrine-card { display: inline-block; width: 150px; margin: 0.5rem; text-align: center; cursor: pointer; }
-    .vitrine-card img { width: 100%; height: auto; border: 1px solid #ccc; border-radius: 4px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; }
-    button { margin: 0.5rem 0; padding: 0.5rem 1rem; }
-    input[type="number"] { width: 60px; }
+    .vitrine-card { 
+      display: block; 
+      width: 100%;
+      max-width: 300px;
+      margin: 0.5rem auto; 
+      text-align: center; 
+      cursor: pointer; 
+    }
+    .vitrine-card img { 
+      width: 100%; 
+      height: auto; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 0.3rem; 
+      word-break: break-word;
+    }
+    button { 
+      margin: 0.5rem 0; 
+      padding: 0.5rem 1rem; 
+    }
+    input[type="number"] { 
+      width: 50px; 
+    }
+    #input-table img, #collect-table img {
+      max-width: 40px;
+      height: auto;
+    }
+    #vitrine-photo {
+      max-width: 100%;
+      height: auto;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.8rem;
+      }
+      th, td {
+        padding: 0.2rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -26,24 +75,28 @@
   <div id="vitrine-page" class="hidden">
     <button id="back">← Back</button>
     <h1 id="vitrine-title"></h1>
-    <img id="vitrine-photo" alt="" style="max-width:200px;">
-    <table id="input-table">
-      <thead>
-        <tr><th>Shelf</th><th>Beverage</th><th>Cold</th><th>Pack.</th><th>Photo</th><th>Need</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <img id="vitrine-photo" alt="">
+    <div style="width: 100%; overflow-x: auto;">
+      <table id="input-table">
+        <thead>
+          <tr><th>Shelf</th><th>Beverage</th><th>Cold</th><th>Pack.</th><th>Photo</th><th>Need</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <div id="collect-page" class="hidden">
     <button id="back-to-main">← Back</button>
     <h1>Collection List</h1>
-    <table id="collect-table">
-      <thead>
-        <tr><th>Display</th><th>Shelf</th><th>Beverage</th><th>Pack.</th><th>Photo</th><th>Qty</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div style="width: 100%; overflow-x: auto;">
+      <table id="collect-table">
+        <thead>
+          <tr><th>Display</th><th>Shelf</th><th>Beverage</th><th>Pack.</th><th>Photo</th><th>Qty</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
 <script>
@@ -131,7 +184,7 @@ function renderInput(id) {
       <td>${p.name}</td>
       <td>${p.inFridge?'Yes':'No'}</td>
       <td>${packNames[p.packagingType]}</td>
-      <td><img src="${p.img}" style="max-width:50px"></td>
+      <td><img src="${p.img}" style="max-width:40px"></td>
       <td><input type="number" min="0" value="${rec ? rec.qty : ''}" placeholder="0"></td>
     `;
     
@@ -170,7 +223,7 @@ function openCollect() {
       <td>${p.shelf}</td>
       <td>${p.name}</td>
       <td>${packNames[p.packagingType]}</td>
-      <td><img src="${p.img}" style="max-width:50px"></td>
+      <td><img src="${p.img}" style="max-width:40px"></td>
       <td>${p.qty}</td>
     `;
     tbody.append(tr);
